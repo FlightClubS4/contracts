@@ -11,18 +11,49 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
  * 游戏筹码token
  */
 contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+  /******************* errors *****************/
+  error FatToken_InvalidOperator(address validOperator, address operator);
+  /********************************************/
+
+  /******************* events *****************/
+
+  /********************************************/
+
+  /******************* state ********************/
+  mapping(address tokenOwner => address gameCA) private _delegateTo;
+  /********************************************/
+
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
-  function initialize(address upgrader) initializer public {
+  function initialize(address initialOwner) initializer public {
     __ERC20_init("FatToken", "FAT");
-    __Ownable_init(upgrader);
+    __Ownable_init(initialOwner);
     __UUPSUpgradeable_init();
   }
 
   function _authorizeUpgrade(address newImplementation) internal onlyOwner override {}
+
+  function _update(address from, address to, uint256 value) internal override {
+    address delegator = _delegateTo[from];
+    if (delegator == address(0) || delegator == msg.sender) {
+      super._update(from, to, value);
+    } else {
+      revert FatToken_InvalidOperator(delegator, msg.sender);
+    }
+  }
+
+  function _approve(address owner, address spender, uint256 value, bool emitEvent) internal override {
+    address delegator = _delegateTo[owner];
+    if (delegator == address(0) || delegator == msg.sender) {
+      super._approve(owner, spender, value, emitEvent);
+    } else {
+      revert FatToken_InvalidOperator(delegator, msg.sender);
+    }
+  }
 
   /*
    * 转入eth, 铸造token
@@ -38,5 +69,23 @@ contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
     // TODO
   }
 
-  // TODO: 修改update函数，正在进行游戏时不能转账给除了游戏合约之外的其他人
+  /*
+   * 玩家 (tx.origin) 将代币全部 approve 给 delegator，且仅允许 delegator 转移代币
+   */
+  function delegateTo(address delegator) public {
+    _approve(tx.origin, delegator, type(uint256).max);
+    _delegateTo[tx.origin] = delegator;
+  }
+
+  /*
+   * delegator 释放代理操作权限
+   */
+  function undelegate(address to) public {
+    address delegator = _delegateTo[to];
+    if (delegator == msg.sender) {
+      delete _delegateTo[to];
+    } else {
+      revert FatToken_InvalidOperator(delegator, msg.sender);
+    }
+  }
 }
