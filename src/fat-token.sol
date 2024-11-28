@@ -8,7 +8,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /*
- * 游戏筹码token
+ * 游戏筹码token,
  */
 contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
   /******************* errors *****************/
@@ -59,14 +59,16 @@ contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
    * 转入eth, 铸造token
    */
   function mint(address to, uint256 amount) public payable {
-    // TODO
+    // TODO CY
+    // 0.001eth换10000token
   }
 
   /*
    * 销毁token，提取eth
    */
   function burn(address payable to, uint256 amount) public {
-    // TODO
+    // TODO CY
+    // 0.001eth换10000token
   }
 
   /*

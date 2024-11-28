@@ -7,10 +7,11 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import { Game } from "./game.sol";
 import { FatToken } from "./fat-token.sol";
+import { GameInitializeInfo, RootInfo } from "./utils/structs.sol";
 
 contract GameFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   /******************* events *****************/
-  event GameCreated(address indexed gameCA, address indexed creator, uint256 bet);
+  event FlightClub_GameCreated(address indexed gameCA, address indexed creator, uint256 bet);
   /********************************************/
 
   /******************* state ********************/
@@ -38,12 +39,16 @@ contract GameFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   /*
    * 创建游戏房间
    */
-  function createGame(uint256 bet) public {
+  function createGame(uint256 bet, RootInfo calldata creatorRoot) public {
     address gameCA = Clones.clone(gameImplementation);
     Game game = Game(gameCA);
-    FatToken fatToken = FatToken(fatTokenAddr);
-    game.initialize(msg.sender, bet, fatTokenAddr);
-    fatToken.delegateTo(gameCA);
-    emit GameCreated(gameCA, msg.sender, bet);
+    GameInitializeInfo memory initializeInfo = GameInitializeInfo({
+      creator: msg.sender,
+      bet: bet,
+      fatTokenAddr: fatTokenAddr,
+      creatorRoot: creatorRoot
+    });
+    game.initialize(initializeInfo);
+    emit FlightClub_GameCreated(gameCA, msg.sender, bet);
   }
 }
