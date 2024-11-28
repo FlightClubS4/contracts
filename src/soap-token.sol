@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
-// TODO: 改为可升级 CY
-contract SoapToken is ERC20, Ownable {
-
+contract SoapToken is ERC20Upgradeable, OwnableUpgradeable {
   /*
     Sn = n(a1+an)/2
     a1 = soapToken.INITIAL_MINT_AMOUNT();
@@ -20,7 +18,11 @@ contract SoapToken is ERC20, Ownable {
 
   uint256 public currentReward = INITIAL_MINT_AMOUNT;
 
-  constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) Ownable(msg.sender){}
+
+  function init(string memory name_, string memory symbol_) public onlyInitializing {
+    __ERC20_init(name_,symbol_);
+    __Ownable_init(msg.sender);
+  }
 
   function mint(address to) external onlyOwner {
     require(currentReward > 0, "All tokens minted");

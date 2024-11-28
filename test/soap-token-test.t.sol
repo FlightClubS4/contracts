@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "../lib/forge-std/src/Test.sol";
 import "../src/soap-token.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
 
 contract SoapTokenTest is Test {
 
@@ -23,8 +24,9 @@ contract SoapTokenTest is Test {
   function setUp() public {
     vm.startPrank(owner);
 
-    soapToken = new SoapToken("SOAP", "SOAP");
-    soapTokenAddress = address(soapToken);
+    bytes memory initData = abi.encodeWithSelector(SoapToken.init.selector,"SoapToken","SOAP");
+    soapTokenAddress = Upgrades.deployUUPSProxy("soap-token.sol:SoapToken",initData);
+    soapToken = SoapToken(soapTokenAddress);
 
     vm.stopPrank();
   }
