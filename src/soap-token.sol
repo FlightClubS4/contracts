@@ -7,26 +7,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // TODO: 改为可升级 CY
 contract SoapToken is ERC20, Ownable {
 
-  uint256 public totalMinted;
-  uint256 public currentMintIndex;
+  /*
+    Sn = n(a1+an)/2
+    a1 = soapToken.INITIAL_MINT_AMOUNT();
+    n = soapToken.INITIAL_MINT_AMOUNT()/soapToken.DECREMENT_PER_STEP();
+    an = a1 - (n-1)*soapToken.DECREMENT_PER_STEP();
+    maxSupply = n*(a1+an)/2;
+    maxSupply = 5000.5 ether
+  */
+  uint256 public constant INITIAL_MINT_AMOUNT = 1 ether;
+  uint256 public constant DECREMENT_PER_STEP = 0.0001 ether;
 
-  uint256 public constant MAX_SUPPLY = 100 ether;
-  uint256 public constant TOTAL_MINTS_TIMES = 10000;
-  uint256 public constant INITIAL_MINT_AMOUNT = 2 * MAX_SUPPLY / TOTAL_MINTS_TIMES + 1;
-  uint256 public constant DECREMENT_PER_STEP = (INITIAL_MINT_AMOUNT - MAX_SUPPLY / TOTAL_MINTS_TIMES) * 2 / TOTAL_MINTS_TIMES + 1;
+  uint256 public currentReward = INITIAL_MINT_AMOUNT;
 
-
-  constructor() ERC20("Soap", "Soap") Ownable(msg.sender){}
+  constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) Ownable(msg.sender){}
 
   function mint(address to) external onlyOwner {
-    require(currentMintIndex < TOTAL_MINTS_TIMES, "All tokens minted");
+    require(currentReward > 0, "All tokens minted");
 
-    uint256 mintAmount = INITIAL_MINT_AMOUNT - (currentMintIndex * DECREMENT_PER_STEP);
-    require(totalMinted + mintAmount <= MAX_SUPPLY, "Exceeds max supply");
-
-    _mint(to, mintAmount);
-    totalMinted += mintAmount;
-    currentMintIndex++;
+    _mint(to, currentReward);
+    currentReward -= DECREMENT_PER_STEP;
   }
 
 }
