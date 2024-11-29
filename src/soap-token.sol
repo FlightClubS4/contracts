@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-contract SoapToken is ERC20Upgradeable, OwnableUpgradeable {
+contract SoapToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+
+  error SoapToken_InvalidMinter(address operator);
   /*
     Sn = n(a1+an)/2
     a1 = soapToken.INITIAL_MINT_AMOUNT();
@@ -17,23 +21,46 @@ contract SoapToken is ERC20Upgradeable, OwnableUpgradeable {
   uint256 public constant DECREMENT_PER_STEP = 0.0001 ether;
 
   uint256 public currentReward;
+  address private _minterManager;
+  mapping(address ca => bool) private _isMinter;
 
-
-  function init(string memory name_, string memory symbol_) public initializer {
-    __ERC20_init(name_,symbol_);
-    __Ownable_init(msg.sender);
-    currentReward = INITIAL_MINT_AMOUNT;
+  modifier onlyMinter() {
+    if (!_isMinter[msg.sender]) {
+      revert SoapToken_InvalidMinter(msg.sender);
+    }
+    _;
   }
 
-  function mint(address to) external onlyOwner {
-    require(currentReward > 0, "All tokens minted");
+  modifier onlyMinterManager() {
+    require(msg.sender == _minterManager, "Invalid minter manager");
+    _;
+  }
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function _authorizeUpgrade(address newImplementation) internal onlyOwner override {}
+
+  function init(address initialOwner, address minterManager) public initializer {
+    __ERC20_init("Soap", "SOAP");
+    __Ownable_init(initialOwner);
+    currentReward = INITIAL_MINT_AMOUNT;
+    _minterManager = minterManager;
+  }
+
+  function mint(address to) external onlyMinter {
+    require(currentReward > 0, "All tokens minted");
     _mint(to, currentReward);
     currentReward -= DECREMENT_PER_STEP;
   }
 
-  function isMintable() public returns(bool) {
-    return currentReward > 0;
+  function setMinter(address minter) public onlyMinterManager {
+    _isMinter[minter] = true;
   }
 
+  function isMintable() public view returns(bool) {
+    return currentReward > 0;
+  }
 }
