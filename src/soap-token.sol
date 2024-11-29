@@ -16,12 +16,13 @@ contract SoapToken is ERC20Upgradeable, OwnableUpgradeable {
   uint256 public constant INITIAL_MINT_AMOUNT = 1 ether;
   uint256 public constant DECREMENT_PER_STEP = 0.0001 ether;
 
-  uint256 public currentReward = INITIAL_MINT_AMOUNT;
+  uint256 public currentReward;
 
 
-  function init(string memory name_, string memory symbol_) public onlyInitializing {
+  function init(string memory name_, string memory symbol_) public initializer {
     __ERC20_init(name_,symbol_);
     __Ownable_init(msg.sender);
+    currentReward = INITIAL_MINT_AMOUNT;
   }
 
   function mint(address to) external onlyOwner {
@@ -29,6 +30,10 @@ contract SoapToken is ERC20Upgradeable, OwnableUpgradeable {
 
     _mint(to, currentReward);
     currentReward -= DECREMENT_PER_STEP;
+  }
+
+  function isMintable() public returns(bool) {
+    return currentReward > 0;
   }
 
 }

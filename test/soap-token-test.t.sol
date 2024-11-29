@@ -8,6 +8,7 @@ import "../lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
 
 contract SoapTokenTest is Test {
 
+  //proxy
   SoapToken public soapToken;
   address public soapTokenAddress;
 
