@@ -32,7 +32,7 @@ contract GameFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
   function _authorizeUpgrade(address newImplementation) internal onlyOwner override {}
 
-  function setGameImpletation(address gameImpl) public onlyOwner {
+  function setGameImplementation(address gameImpl) public onlyOwner {
     gameImplementation = gameImpl;
   }
 

@@ -18,7 +18,7 @@ contract FatTokenTest is Test {
   function setUp() public {
     vm.startPrank(admin);
 
-    bytes initData = abi.encodeWithSelector(FatToken.initialize.selector, admin);
+    bytes memory initData = abi.encodeWithSelector(FatToken.initialize.selector, admin);
     fatTokenAddress = Upgrades.deployUUPSProxy("fat-token.sol:FatToken", initData);
     fatToken = FatToken(fatTokenAddress);
 
