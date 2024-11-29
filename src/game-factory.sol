@@ -10,7 +10,7 @@ import { FatToken } from "./fat-token.sol";
 import { SoapToken } from "./soap-token.sol";
 import { GameInitializeInfo, RootInfo } from "./utils/structs.sol";
 
-contract GameFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract GameFactory is OwnableUpgradeable, UUPSUpgradeable {
   /******************* events *****************/
   event FlightClub_GameCreated(address indexed gameCA, address indexed creator, uint256 bet);
   /********************************************/

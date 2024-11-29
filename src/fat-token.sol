@@ -10,7 +10,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 /*
  * 游戏筹码token
  */
-contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract FatToken is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
   /******************* errors *****************/
   error FatToken_InvalidOperator(address validOperator, address operator);
   /********************************************/
