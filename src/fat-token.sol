@@ -23,6 +23,7 @@ contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
   mapping(address tokenOwner => address gameCA) private _delegateTo;
   /********************************************/
 
+  uint constant public FATS_PER_ETH = 10000000;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -58,17 +59,18 @@ contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
   /*
    * 转入eth, 铸造token
    */
-  function mint(address to, uint256 amount) public payable {
-    // TODO CY
-    // 0.001eth换10000token
+  function mint(address to) public payable {
+    require(msg.value > 0, "no eth sent");
+    _mint(to, FATS_PER_ETH * msg.value);
   }
 
   /*
    * 销毁token，提取eth
    */
   function burn(address payable to, uint256 amount) public {
-    // TODO CY
-    // 0.001eth换10000token
+    require(balanceOf(msg.sender) >= amount, "not enough fats");
+    _burn(msg.sender, amount);
+    to.transfer(amount / FATS_PER_ETH);
   }
 
   /*
@@ -90,4 +92,9 @@ contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
       revert FatToken_InvalidOperator(delegator, msg.sender);
     }
   }
+
+  receive() payable external {
+    mint(msg.sender);
+  }
+
 }

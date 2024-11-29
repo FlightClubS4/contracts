@@ -2,12 +2,42 @@
 pragma solidity ^0.8.23;
 
 import "../lib/forge-std/src/Test.sol";
+import "../src/fat-token.sol";
+import "../lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
 
-contract FatTokenTest is Test{
+contract FatTokenTest is Test {
+
+  //proxy
+  FatToken public fatToken;
+  address public fatTokenAddress;
+
+  address public admin = vm.randomAddress();
+  address public userA = vm.randomAddress();
+  address public userB = vm.randomAddress();
+
   function setUp() public {
+    vm.startPrank(admin);
+
+    bytes initData = abi.encodeWithSelector(FatToken.initialize.selector, admin);
+    fatTokenAddress = Upgrades.deployUUPSProxy("fat-token.sol:FatToken", initData);
+    fatToken = FatToken(fatTokenAddress);
+
+    vm.stopPrank();
+  }
+
+  function testMint() public {
 
   }
 
+  function testBurn() public {
 
+  }
 
+  function testDelegateTo() public {
+
+  }
+
+  function testUnDelegateTo() public {
+
+  }
 }
