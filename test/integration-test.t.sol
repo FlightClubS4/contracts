@@ -8,11 +8,12 @@ import {GameFactory} from "../src/game-factory.sol";
 import {Upgrades} from "../lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
 import {RootInfo} from "../src/utils/structs.sol";
 import {MerkleTree} from "../lib/openzeppelin-contracts/contracts/utils/structs/MerkleTree.sol";
+import "../src/game.sol";
 
 contract IntegrationTest is Test {
 
   FatToken public fatToken;
-  address public fatTokenAddress;
+  address payable public fatTokenAddress;
 
   SoapToken public soapToken;
   address public soapTokenAddress;
@@ -44,7 +45,7 @@ contract IntegrationTest is Test {
 
     //fatToken
     bytes memory initData = abi.encodeWithSelector(FatToken.initialize.selector, admin);
-    fatTokenAddress = Upgrades.deployUUPSProxy("fat-token.sol:FatToken", initData);
+    fatTokenAddress = payable(Upgrades.deployUUPSProxy("fat-token.sol:FatToken", initData));
     fatToken = FatToken(fatTokenAddress);
 
     //soapToken
@@ -53,11 +54,15 @@ contract IntegrationTest is Test {
     soapToken = SoapToken(soapTokenAddress);
 
     //factory
-    initData = abi.encodeWithSelector(GameFactory.initialize.selector, admin, fatTokenAddress);
+    initData = abi.encodeWithSelector(GameFactory.initialize.selector, admin, fatTokenAddress, soapTokenAddress);
     factoryAddress = Upgrades.deployUUPSProxy("game-factory.sol:GameFactory", initData);
     factory = GameFactory(factoryAddress);
     Game game = new Game();
     factory.setGameImplementation(address(game));
+
+    //config soapToken
+    soapToken.setMintManager(factoryAddress);
+
     vm.stopPrank();
   }
 

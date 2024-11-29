@@ -9,7 +9,7 @@ contract FatTokenTest is Test {
 
   //proxy
   FatToken public fatToken;
-  address public fatTokenAddress;
+  address payable public fatTokenAddress;
 
   address public admin = vm.randomAddress();
   address public userA = vm.randomAddress();
@@ -19,7 +19,7 @@ contract FatTokenTest is Test {
     vm.startPrank(admin);
 
     bytes memory initData = abi.encodeWithSelector(FatToken.initialize.selector, admin);
-    fatTokenAddress = Upgrades.deployUUPSProxy("fat-token.sol:FatToken", initData);
+    fatTokenAddress = payable (Upgrades.deployUUPSProxy("fat-token.sol:FatToken", initData));
     fatToken = FatToken(fatTokenAddress);
 
     vm.stopPrank();

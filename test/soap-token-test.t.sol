@@ -25,10 +25,11 @@ contract SoapTokenTest is Test {
   function setUp() public {
     vm.startPrank(owner);
 
-    bytes memory initData = abi.encodeWithSelector(SoapToken.init.selector,"SoapToken","SOAP");
+    bytes memory initData = abi.encodeWithSelector(SoapToken.init.selector, owner);
     soapTokenAddress = Upgrades.deployUUPSProxy("soap-token.sol:SoapToken",initData);
     soapToken = SoapToken(soapTokenAddress);
-
+    soapToken.setMintManager(owner);
+    soapToken.setMinter(owner);
     vm.stopPrank();
   }
 

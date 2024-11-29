@@ -9,6 +9,7 @@ struct RootInfo {
 struct GameInitializeInfo {
   address creator;
   address fatTokenAddr;
+  address soapTokenAddr;
   uint256 bet;
   RootInfo creatorRoot;
 }
@@ -24,14 +25,26 @@ struct Attack {
   uint248 nonce;
 }
 
+struct OnChainRound {
+  uint248 attackNonce;
+  uint8 status;
+  uint240 cellNonce;
+  uint256 deadline;
+}
+
 struct RaiseProposal {
   uint256 deadline;
   uint256 bet;
 }
 
 struct RaiseProof {
-  uint256 cellID;
-  bytes32 attackProof;
-  bytes32 cellProof;
+  Attack attack;
+  Cell cell;
+  bytes32[] attackProof;
+  bytes32[] cellProof;
 }
 
+struct Result {
+  Cell[3] cells;
+  bytes32[][3] proofs;
+}

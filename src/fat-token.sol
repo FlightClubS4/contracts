@@ -8,7 +8,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /*
- * 游戏筹码token,
+ * 游戏筹码token
  */
 contract FatToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
   /******************* errors *****************/
