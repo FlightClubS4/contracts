@@ -22,15 +22,15 @@ contract IntegrationTest is Test {
   address public factoryAddress;
 
   address public admin = vm.randomAddress();
+  //creator
   address public playerA = vm.randomAddress();
   address public playerB = vm.randomAddress();
 
-//  using MerkleTree for MerkleTree.Bytes32PushTree;
-
-//  MerkleTree.Bytes32PushTree public tree;
-//  bytes32 public root;
-//  bytes32 public zero = 0x0;  // 空叶子值，通常可以选择一个不会出现在树中的值
-
+  //generate offline https://github.com/OpenZeppelin/merkle-tree
+  bytes32 public merkleTreePlayerADefend = bytes32(vm.randomUint());
+  bytes32 public merkleTreePlayerAAttack = bytes32(vm.randomUint());
+  bytes32 public merkleTreePlayerBDefend = bytes32(vm.randomUint());
+  bytes32 public merkleTreePlayerBAttack = bytes32(vm.randomUint());
   /*
   1. depoly fat soap factory
   2. playerA (1 eth) playerB (1eth)
@@ -49,7 +49,7 @@ contract IntegrationTest is Test {
     fatToken = FatToken(fatTokenAddress);
 
     //soapToken
-    initData = abi.encodeWithSelector(SoapToken.init.selector, "SoapToken", "SOAP");
+    initData = abi.encodeWithSelector(SoapToken.init.selector, admin);
     soapTokenAddress = Upgrades.deployUUPSProxy("soap-token.sol:SoapToken", initData);
     soapToken = SoapToken(soapTokenAddress);
 
@@ -66,37 +66,62 @@ contract IntegrationTest is Test {
     vm.stopPrank();
   }
 
-  function gameCompleteTest() public {
+  function testCreateGame() public {
+    vm.deal(playerA, 1 ether);
 
-//
-//    vm.deal(playerA, 1 ether);
-//    vm.deal(playerB, 1 ether);
-//
-//    vm.startPrank(playerA);
-//    fatToken.mint{value: playerA.balance}(playerA);
-//
-//    //generate merkleRoot
-//    // 设置树的深度为 2（可以容纳 3 个叶子节点）
-//    root = tree.setup(2, zero, Hashes.commutativeKeccak256);
-//    // 插入叶子节点 0、1、2
-//    (uint256 index0, bytes32 newRoot0) = tree.push(bytes32(uint256(0)));  // 节点 0
-//    (uint256 index1, bytes32 newRoot1) = tree.push(bytes32(uint256(1)));  // 节点 1
-//    (uint256 index2, bytes32 newRoot2) = tree.push(bytes32(uint256(2)));  // 节点 2
-//    // 更新树的根
-//    root = newRoot2;
-//
-//    RootInfo rootInfoA = RootInfo({
-//      attackRoot: vm.randomUint(),
-//      cellRoot: vm.randomUint()
-//    });
-//    factory.createGame(fatToken.balanceOf(playerA),rootInfo);
-//    vm.stopPrank();
-//
-//    vm.startPrank(playerB);
-//    fatToken.mint{value: playerB.balance}(playerB);
-//    vm.stopPrank();
+    vm.startPrank(playerA);
+
+    fatToken.mint{value: playerA.balance}(playerA);
+    Game game = Game(createGame(playerA, playerA.balance));
+
+    //todo: deleteTo
+    assertEq(game.creator(), playerA, "game's creator is msgSender");
 
 
+    vm.stopPrank();
+  }
+
+  function testJoin() public {
+    //createGame
+    vm.deal(playerA, 1 ether);
+
+    vm.startPrank(playerA);
+    fatToken.mint{value: playerA.balance}(playerA);
+    Game game = Game(createGame(playerA, playerA.balance));
+    vm.stopPrank();
+
+    //join
+    vm.deal(playerB, 1 ether);
+
+    vm.startPrank(playerB);
+    fatToken.mint{value: playerB.balance}(playerB);
+    join(playerB,address (game));
+    vm.stopPrank();
+    //todo: deleteTo
+    assertEq(playerB, game.guest(),"joiner is guest");
+  }
+
+
+
+
+  function createGame(address creator, uint bet) public returns(address){
+    //generate merkleRoot
+    RootInfo memory rootInfo = RootInfo({
+      attackRoot: merkleTreePlayerAAttack,
+      cellRoot: merkleTreePlayerADefend
+    });
+
+    return factory.createGame(fatToken.balanceOf(playerA), rootInfo);
+  }
+
+  function join(address joiner,address gameAddress) public {
+    RootInfo memory rootInfo = RootInfo({
+      attackRoot: merkleTreePlayerBAttack,
+      cellRoot: merkleTreePlayerBDefend
+    });
+
+    Game game = Game(gameAddress);
+    game.join(rootInfo);
   }
 
 

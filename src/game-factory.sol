@@ -42,7 +42,7 @@ contract GameFactory is OwnableUpgradeable, UUPSUpgradeable {
   /*
    * 创建游戏房间
    */
-  function createGame(uint256 bet, RootInfo calldata creatorRoot) public {
+  function createGame(uint256 bet, RootInfo calldata creatorRoot) public returns(address){
     address gameCA = Clones.clone(_gameImplementation);
     Game game = Game(gameCA);
     GameInitializeInfo memory initializeInfo = GameInitializeInfo({
@@ -56,5 +56,7 @@ contract GameFactory is OwnableUpgradeable, UUPSUpgradeable {
     SoapToken soapToken = SoapToken(_soapTokenAddr);
     soapToken.setMinter(gameCA);
     emit FlightClub_GameCreated(gameCA, msg.sender, bet);
+
+    return gameCA;
   }
 }

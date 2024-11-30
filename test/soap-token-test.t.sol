@@ -76,7 +76,7 @@ contract SoapTokenTest is Test {
   function testNotOwnerMint() public {
     vm.startPrank(userA);
 
-    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, userA));
+    vm.expectRevert(abi.encodeWithSelector(SoapToken.SoapToken_InvalidMinter.selector, userA));
     soapToken.mint(userA);
 
     vm.stopPrank();
