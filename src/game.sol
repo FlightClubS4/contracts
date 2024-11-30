@@ -25,6 +25,8 @@ contract Game is Initializable {
   event FlightClubGame_Raise(address raiser, uint256 cellID, uint256 bet);
   event FlightClubGame_ConfirmRaise(address confirmer, uint256 cellID, uint256 bet);
   event FlightClubGame_GameEnded(address winner);
+  event FlightClubGame_Attack(address attacker, uint8 target,uint248 nonce, bytes32[] proof);
+  event FlightClubGame_respondAttack(address attackee,address attacker, uint8 id, uint8 status,uint240 nonce);
   /********************************************/
 
   /******************* state *******************/
@@ -105,13 +107,19 @@ contract Game is Initializable {
     return MerkleProof.verify(proof, root, leaf);
   }
 
-  function AttackOnChain(Attack calldata attack, bytes32[] calldata proof) public onlyPlayer {
-    // TODO: SL
+  function requestAttackOnChain(Attack calldata attack, bytes32[] calldata proof) public onlyPlayer {
+    // attaker
+    require(verifyAttack(msg.sender, attack, proof), "not a valid attack");
+    // todo: ? second
+    _onchainRounds[msg.sender][attack.target] = block.timestamp + 15 seconds;
+    emit FlightClubGame_Attack(msg.sender, attack.target,attack.nonce, proof);
   }
 
-
-  function respondAttackOnChain(Cell calldata cell) public onlyPlayer {
-    // TODO: SL
+  function respondAttackOnChain(address attacker,Cell calldata cell) public onlyPlayer {
+    uint256 deadline = _onchainRounds[attacker][cell.id];
+    require(block.timestamp < deadline,"out of respond deadline");
+    deadline = type(uint256).max;
+    emit FlightClubGame_respondAttack(msg.sender,attacker, cell.id, cell.status,cell.nonce);
   }
 
   function _confirmResult(address player, Result calldata result) private view {
