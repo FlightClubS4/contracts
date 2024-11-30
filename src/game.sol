@@ -118,7 +118,7 @@ contract Game is Initializable {
   function respondAttackOnChain(Cell calldata cell) public onlyPlayer {
     uint256 deadline = _onchainRounds[_enemy()][cell.id];
     require(block.timestamp < deadline,"out of respond deadline");
-    deadline = type(uint256).max;
+    _onchainRounds[_enemy()][cell.id] = type(uint256).max;
     emit FlightClubGame_respondAttack(msg.sender, cell.id, cell.status,cell.nonce);
   }
 
