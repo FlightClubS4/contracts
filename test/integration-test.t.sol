@@ -2,13 +2,14 @@
 pragma solidity ^0.8.23;
 
 import "../lib/forge-std/src/Test.sol";
-import {FatToken} from "../src/fat-token.sol";
-import {SoapToken} from "../src/soap-token.sol";
-import {GameFactory} from "../src/game-factory.sol";
-import {Upgrades} from "../lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
-import {RootInfo} from "../src/utils/structs.sol";
-import {MerkleTree} from "../lib/openzeppelin-contracts/contracts/utils/structs/MerkleTree.sol";
+import "../src/game-factory.sol";
 import "../src/game.sol";
+import {FatToken} from "../src/fat-token.sol";
+import {GameFactory} from "../src/game-factory.sol";
+import {MerkleTree} from "../lib/openzeppelin-contracts/contracts/utils/structs/MerkleTree.sol";
+import {RootInfo, Attack} from "../src/utils/structs.sol";
+import {SoapToken} from "../src/soap-token.sol";
+import {Upgrades} from "../lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
 
 contract IntegrationTest is Test {
 
@@ -27,10 +28,11 @@ contract IntegrationTest is Test {
   address public playerB = vm.randomAddress();
 
   //generate offline https://github.com/OpenZeppelin/merkle-tree
-  bytes32 public merkleTreePlayerADefend = bytes32(vm.randomUint());
-  bytes32 public merkleTreePlayerAAttack = bytes32(vm.randomUint());
-  bytes32 public merkleTreePlayerBDefend = bytes32(vm.randomUint());
-  bytes32 public merkleTreePlayerBAttack = bytes32(vm.randomUint());
+  bytes32 public merkleTreePlayerADefend = bytes32(0x1478da7d4865c2b3932949620cfe2a65cdb75df475c93ac1308b56c27e63a4ff);
+  bytes32 public merkleTreePlayerAAttack = bytes32(0x491fb725fd9f59d19ddf55aa4247eb8bc7bab6f5335134d316e370182f541dd9);
+  bytes32 public merkleTreePlayerBDefend = bytes32(0x1478da7d4865c2b3932949620cfe2a65cdb75df475c93ac1308b56c27e63a4ff);
+  bytes32 public merkleTreePlayerBAttack = bytes32(0x491fb725fd9f59d19ddf55aa4247eb8bc7bab6f5335134d316e370182f541dd9);
+
   /*
   1. depoly fat soap factory
   2. playerA (1 eth) playerB (1eth)
@@ -72,9 +74,11 @@ contract IntegrationTest is Test {
     vm.startPrank(playerA);
 
     fatToken.mint{value: playerA.balance}(playerA);
+    vm.expectEmit();
+    emit GameFactory.FlightClub_GameCreated(address(0), playerA, fatToken.balanceOf(playerA));
     Game game = Game(createGame(playerA, playerA.balance));
 
-    //todo: deleteTo
+    //todo: test deleteTo
     assertEq(game.creator(), playerA, "game's creator is msgSender");
 
 
@@ -92,19 +96,59 @@ contract IntegrationTest is Test {
 
     //join
     vm.deal(playerB, 1 ether);
+    vm.startPrank(playerB);
 
+    fatToken.mint{value: playerB.balance}(playerB);
+    vm.expectEmit();
+    emit Game.FlightClubGame_GuestJoin(playerB);
+    join(playerB, address(game));
+
+    vm.stopPrank();
+    //todo: test deleteTo
+    assertEq(playerB, game.guest(), "joiner is guest");
+  }
+
+  function testAttack() public {
+
+    //createGame
+    vm.deal(playerA, 1 ether);
+    vm.startPrank(playerA);
+    fatToken.mint{value: playerA.balance}(playerA);
+    Game game = Game(createGame(playerA, playerA.balance));
+    vm.stopPrank();
+
+    //join
+    vm.deal(playerB, 1 ether);
     vm.startPrank(playerB);
     fatToken.mint{value: playerB.balance}(playerB);
-    join(playerB,address (game));
+    join(playerB, address(game));
     vm.stopPrank();
-    //todo: deleteTo
-    assertEq(playerB, game.guest(),"joiner is guest");
+
+    //playerA call attackOnChain
+    vm.startPrank(playerA);
+    Attack memory playAAttack = Attack({
+      target: 0x1,
+      nonce: 0x0
+    });
+    bytes32[] memory proof = new bytes32[](1);
+    proof[0] = bytes32(0x86718b11f5e1187ce1581907bbccb568131d598fe80ee57606046e89f66e0121);
+    vm.expectEmit();
+    emit Game.FlightClubGame_Attack(playerA, playAAttack.target, playAAttack.nonce, proof);
+    attack(playAAttack, proof, game);
+
+    vm.stopPrank();
+  }
+
+  function testResponseAttack() public {
+    //playerB call ResponseAttackOnChain
+  }
+
+  function attack(Attack memory attack, bytes32[] memory proof, Game game) public {
+    game.requestAttackOnChain(attack,proof);
   }
 
 
-
-
-  function createGame(address creator, uint bet) public returns(address){
+  function createGame(address creator, uint bet) public returns (address){
     //generate merkleRoot
     RootInfo memory rootInfo = RootInfo({
       attackRoot: merkleTreePlayerAAttack,
@@ -114,7 +158,7 @@ contract IntegrationTest is Test {
     return factory.createGame(fatToken.balanceOf(playerA), rootInfo);
   }
 
-  function join(address joiner,address gameAddress) public {
+  function join(address joiner, address gameAddress) public {
     RootInfo memory rootInfo = RootInfo({
       attackRoot: merkleTreePlayerBAttack,
       cellRoot: merkleTreePlayerBDefend

@@ -43,7 +43,7 @@ contract Game is Initializable {
 
   /******************** modifier **************/
   modifier onlyPlayer() {
-    if (msg.sender != creator || msg.sender != guest) {
+    if (msg.sender != creator && msg.sender != guest) {
       revert FlightClubGame_OnlyPlayerCanOperate(msg.sender, creator, guest);
     }
     _;
