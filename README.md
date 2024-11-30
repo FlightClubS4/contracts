@@ -18,7 +18,7 @@ https://book.getfoundry.sh/
 ### Build
 
 ```shell
-$ forge build
+$ forge build 
 ```
 
 ### Test
