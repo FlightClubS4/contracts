@@ -20,7 +20,7 @@ contract FatToken is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
   /********************************************/
 
   /******************* state ********************/
-  mapping(address tokenOwner => address gameCA) private _delegateTo;
+  mapping(address tokenOwner => address gameCA) public _delegateTo;
   /********************************************/
 
   uint constant public FATS_PER_ETH = 10000000;
@@ -87,6 +87,7 @@ contract FatToken is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
   function undelegate(address to) public {
     address delegator = _delegateTo[to];
     if (delegator == msg.sender) {
+      _approve(to, delegator, 0);
       delete _delegateTo[to];
     } else {
       revert FatToken_InvalidOperator(delegator, msg.sender);
