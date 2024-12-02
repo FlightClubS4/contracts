@@ -110,12 +110,13 @@ contract Game is Initializable {
   function requestAttackOnChain(Attack calldata attack, bytes32[] calldata proof) public onlyPlayer {
     // attaker
     require(verifyAttack(msg.sender, attack, proof), "not a valid attack");
-    // todo: ? second
-    _onchainRounds[msg.sender][attack.target] = block.timestamp + 15 seconds;
+    _onchainRounds[msg.sender][attack.target] = block.timestamp + 60 seconds;
     emit FlightClubGame_Attack(msg.sender, attack.target,attack.nonce, proof);
   }
 
-  function respondAttackOnChain(Cell calldata cell) public onlyPlayer {
+  function respondAttackOnChain(Cell calldata cell, bytes32[] calldata proof) public onlyPlayer {
+    // attakee
+    require(verifyCell(msg.sender, cell, proof), "not a valid cell");
     uint256 deadline = _onchainRounds[_enemy()][cell.id];
     require(block.timestamp < deadline,"out of respond deadline");
     _onchainRounds[_enemy()][cell.id] = type(uint256).max;
